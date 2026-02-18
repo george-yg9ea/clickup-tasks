@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export function Navbar() {
   return (
-    <nav className="border-b">
+    <nav className="sticky top-0 z-50 border-b bg-background">
       <div className="container mx-auto flex items-center justify-between px-4 py-4">
         <h1 className="text-xl font-semibold">George's Tasks</h1>
         <Button variant="ghost" size="sm" onClick={() => signOut({ callbackUrl: "/auth/signin" })}>

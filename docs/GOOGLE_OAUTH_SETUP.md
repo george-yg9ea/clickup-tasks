@@ -48,13 +48,13 @@ You must have a consent screen before creating OAuth credentials.
 5. **Authorized JavaScript origins**
    - For local dev, add:
      - `http://localhost:3000`
-   - For production later, add your real origin, e.g.:
-     - `https://yourdomain.com`
+   - For production, add:
+     - `https://georgestasks.vercel.app`
 6. **Authorized redirect URIs**
    - For local dev, add **exactly**:
      - `http://localhost:3000/api/auth/callback/google`
-   - For production later, add:
-     - `https://yourdomain.com/api/auth/callback/google`
+   - For production, add **exactly**:
+     - `https://georgestasks.vercel.app/api/auth/callback/google`
 7. Click **Create**.
 
 ---
@@ -98,6 +98,8 @@ Restart the dev server after changing env vars.
 |---------------------------|--------|
 | Credentials page           | https://console.cloud.google.com/apis/credentials |
 | Local redirect URI        | `http://localhost:3000/api/auth/callback/google`   |
+| Production redirect URI   | `https://georgestasks.vercel.app/api/auth/callback/google`   |
+| Production domain         | `https://georgestasks.vercel.app`   |
 | Env vars for NextAuth     | `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_SECRET` |
 
 ---
