@@ -17,12 +17,10 @@ export function getStatusColor(statusType: string): "default" | "secondary" | "o
 }
 
 /**
- * Groups a flat list of tasks into an arbitrarily-deep tree,
- * then wraps roots in project-level group rows.
- *
- * Result: Project group → Task → Subtask → Sub-subtask → …
+ * Builds a subtask tree without project grouping.
+ * Result: Task → Subtask → Sub-subtask → …
  */
-export function buildTaskTree(tasks: ClickUpTask[]): ClickUpTask[] {
+export function buildSubtaskTree(tasks: ClickUpTask[]): ClickUpTask[] {
   const nodeMap = new Map<string, ClickUpTask>();
 
   for (const task of tasks) {
@@ -60,7 +58,18 @@ export function buildTaskTree(tasks: ClickUpTask[]): ClickUpTask[] {
     roots.push(virtualParent);
   }
 
-  // Group roots by project
+  return roots;
+}
+
+/**
+ * Groups a flat list of tasks into an arbitrarily-deep tree,
+ * then wraps roots in project-level group rows.
+ *
+ * Result: Project group → Task → Subtask → Sub-subtask → …
+ */
+export function buildProjectTree(tasks: ClickUpTask[]): ClickUpTask[] {
+  const roots = buildSubtaskTree(tasks);
+
   const projectGroups = new Map<string, ClickUpTask[]>();
   for (const root of roots) {
     const projectKey = root.project?.id ?? "_none";

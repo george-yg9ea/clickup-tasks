@@ -1,17 +1,22 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { FolderKanban, List } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { DataTable } from "@/components/data-table";
-import { columns } from "./columns";
+import { groupedColumns, flatColumns } from "./columns";
 import { ClickUpTask } from "@/types/clickup";
 import { Skeleton } from "@/components/ui/skeleton";
-import { buildTaskTree } from "@/lib/task-utils";
+import { Button } from "@/components/ui/button";
+import { buildProjectTree, buildSubtaskTree } from "@/lib/task-utils";
+
+type ViewMode = "grouped" | "all";
 
 export default function Home() {
   const [tasks, setTasks] = useState<ClickUpTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("grouped");
 
   useEffect(() => {
     async function fetchTasks() {
@@ -38,7 +43,11 @@ export default function Home() {
     fetchTasks();
   }, []);
 
-  const treeData = useMemo(() => buildTaskTree(tasks), [tasks]);
+  const groupedData = useMemo(() => buildProjectTree(tasks), [tasks]);
+  const flatData = useMemo(() => buildSubtaskTree(tasks), [tasks]);
+
+  const data = viewMode === "grouped" ? groupedData : flatData;
+  const columns = viewMode === "grouped" ? groupedColumns : flatColumns;
 
   return (
     <div className="min-h-screen bg-background">
@@ -65,7 +74,29 @@ export default function Home() {
                 No tasks found
               </div>
             ) : (
-              <DataTable columns={columns} data={treeData} />
+              <>
+                <div className="mb-4 flex items-center gap-1 rounded-lg border p-1 w-fit">
+                  <Button
+                    variant={viewMode === "grouped" ? "secondary" : "ghost"}
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => setViewMode("grouped")}
+                  >
+                    <FolderKanban className="mr-1.5 h-3.5 w-3.5" />
+                    Group by Project
+                  </Button>
+                  <Button
+                    variant={viewMode === "all" ? "secondary" : "ghost"}
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => setViewMode("all")}
+                  >
+                    <List className="mr-1.5 h-3.5 w-3.5" />
+                    All Tasks
+                  </Button>
+                </div>
+                <DataTable columns={columns} data={data} />
+              </>
             )}
           </>
         )}
