@@ -17,9 +17,10 @@ export function getStatusColor(statusType: string): "default" | "secondary" | "o
 }
 
 /**
- * Groups a flat list of tasks into an arbitrarily-deep tree.
- * Handles task → subtask → sub-subtask → … at any depth.
- * When a parent is not in the list, a virtual row is created from parent_name.
+ * Groups a flat list of tasks into an arbitrarily-deep tree,
+ * then wraps roots in project-level group rows.
+ *
+ * Result: Project group → Task → Subtask → Sub-subtask → …
  */
 export function buildTaskTree(tasks: ClickUpTask[]): ClickUpTask[] {
   const nodeMap = new Map<string, ClickUpTask>();
@@ -59,5 +60,34 @@ export function buildTaskTree(tasks: ClickUpTask[]): ClickUpTask[] {
     roots.push(virtualParent);
   }
 
-  return roots;
+  // Group roots by project
+  const projectGroups = new Map<string, ClickUpTask[]>();
+  for (const root of roots) {
+    const projectKey = root.project?.id ?? "_none";
+    if (!projectGroups.has(projectKey)) {
+      projectGroups.set(projectKey, []);
+    }
+    projectGroups.get(projectKey)!.push(root);
+  }
+
+  const result: ClickUpTask[] = [];
+  for (const [projectKey, children] of projectGroups) {
+    const sample = children[0];
+    const projectGroup: ClickUpTask = {
+      ...sample,
+      id: `project-${projectKey}`,
+      name: sample.project?.name || "No project",
+      parent: null,
+      parent_name: null,
+      _isProjectGroup: true,
+      _isVirtualParent: false,
+      subTasks: children,
+      url: sample.folder?.id && sample.space?.id
+        ? `https://app.clickup.com/${sample.team_id}/v/f/${sample.folder.id}/${sample.space.id}`
+        : "",
+    };
+    result.push(projectGroup);
+  }
+
+  return result;
 }

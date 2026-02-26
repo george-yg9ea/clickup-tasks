@@ -78,7 +78,13 @@ export function DataTable({ columns, data }: DataTableProps) {
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className={row.depth > 0 ? "bg-muted/30" : ""}
+                className={
+                  row.original._isProjectGroup
+                    ? "bg-muted/50"
+                    : row.depth > 1
+                      ? "bg-muted/20"
+                      : ""
+                }
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>

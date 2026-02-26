@@ -60,16 +60,10 @@ function listUrl(teamId: string, listId: string): string {
   return `https://app.clickup.com/${teamId}/v/li/${listId}`;
 }
 
-/** Build ClickUp folder view URL from task (team_id, folder.id, space.id). */
-function folderUrl(teamId: string, folderId: string, spaceId: string): string {
-  return `https://app.clickup.com/${teamId}/v/f/${folderId}/${spaceId}`;
-}
 
 export const columns: ColumnDef<ClickUpTask>[] = [
   {
-    accessorKey: "project",
-    size: 160,
-    accessorFn: (row) => row.project?.name ?? "",
+    accessorKey: "name",
     header: ({ column }) => (
       <Button
         variant="ghost"
@@ -77,30 +71,74 @@ export const columns: ColumnDef<ClickUpTask>[] = [
         className="-ml-3 h-8 hover:bg-transparent group"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Project
+        Task
         <ArrowUpDown className={`ml-2 h-4 w-4 transition-opacity ${
           column.getIsSorted() ? "opacity-100" : "opacity-0 group-hover:opacity-50"
         }`} />
       </Button>
     ),
     cell: ({ row }) => {
-      const task = row.original;
-      const name = task.project?.name;
-      const href = name && task.folder?.id && task.space?.id
-        ? folderUrl(task.team_id, task.folder.id, task.space.id)
-        : null;
-      return name ? (
-        href ? (
-          <CellLink href={href} maxWidth="max-w-[140px]" title={name} className="text-sm">
-            {name}
-          </CellLink>
-        ) : (
-          <Truncate maxWidth="max-w-[140px]" title={name} className="text-sm">
-            {name}
-          </Truncate>
-        )
-      ) : (
-        <span className="text-muted-foreground/50">—</span>
+      const canExpand = row.getCanExpand();
+      const isProjectGroup = row.original._isProjectGroup;
+      const isVirtual = row.original._isVirtualParent;
+      const indent = isProjectGroup ? 0 : (row.depth - 1) * 24;
+
+      return (
+        <div
+          className="flex items-center gap-1"
+          style={{ paddingLeft: `${Math.max(0, indent)}px` }}
+        >
+          {canExpand ? (
+            <button
+              onClick={row.getToggleExpandedHandler()}
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md hover:bg-muted transition-colors"
+            >
+              <ChevronRight
+                className={`h-4 w-4 text-muted-foreground transition-transform ${
+                  row.getIsExpanded() ? "rotate-90" : ""
+                }`}
+              />
+            </button>
+          ) : (
+            <span className="w-6 shrink-0" />
+          )}
+          {isProjectGroup ? (
+            row.original.url ? (
+              <CellLink
+                href={row.original.url}
+                maxWidth="max-w-[400px]"
+                title={row.original.name}
+                className="font-semibold text-sm"
+              >
+                {row.original.name}
+              </CellLink>
+            ) : (
+              <span className="font-semibold text-sm">{row.original.name}</span>
+            )
+          ) : row.original.url && !isVirtual ? (
+            <CellLink
+              href={row.original.url}
+              maxWidth="max-w-[380px]"
+              title={row.original.name}
+              className={isVirtual ? "text-muted-foreground font-medium" : ""}
+            >
+              {row.original.name}
+            </CellLink>
+          ) : (
+            <Truncate
+              maxWidth="max-w-[380px]"
+              title={row.original.name}
+              className={isVirtual ? "text-muted-foreground font-medium" : ""}
+            >
+              {row.original.name}
+            </Truncate>
+          )}
+          {canExpand && (
+            <span className="ml-1 text-xs text-muted-foreground shrink-0">
+              ({row.subRows.length})
+            </span>
+          )}
+        </div>
       );
     },
   },
@@ -122,78 +160,13 @@ export const columns: ColumnDef<ClickUpTask>[] = [
       </Button>
     ),
     cell: ({ row }) => {
+      if (row.original._isProjectGroup) return null;
       const task = row.original;
       const href = listUrl(task.team_id, task.list.id);
       return (
         <CellLink href={href} maxWidth="max-w-[140px]" title={task.list.name}>
           {task.list.name}
         </CellLink>
-      );
-    },
-  },
-  {
-    accessorKey: "name",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 hover:bg-transparent group"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Task
-        <ArrowUpDown className={`ml-2 h-4 w-4 transition-opacity ${
-          column.getIsSorted() ? "opacity-100" : "opacity-0 group-hover:opacity-50"
-        }`} />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const canExpand = row.getCanExpand();
-      const isSubRow = row.depth > 0;
-      const isVirtual = row.original._isVirtualParent;
-
-      return (
-        <div
-          className="flex items-center gap-1"
-          style={{ paddingLeft: `${row.depth * 24}px` }}
-        >
-          {canExpand ? (
-            <button
-              onClick={row.getToggleExpandedHandler()}
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md hover:bg-muted transition-colors"
-            >
-              <ChevronRight
-                className={`h-4 w-4 text-muted-foreground transition-transform ${
-                  row.getIsExpanded() ? "rotate-90" : ""
-                }`}
-              />
-            </button>
-          ) : (
-            <span className="w-6 shrink-0" />
-          )}
-          {row.original.url && !isVirtual ? (
-            <CellLink
-              href={row.original.url}
-              maxWidth="max-w-[280px]"
-              title={row.original.name}
-              className={isVirtual ? "text-muted-foreground font-medium" : ""}
-            >
-              {row.original.name}
-            </CellLink>
-          ) : (
-            <Truncate
-              maxWidth="max-w-[280px]"
-              title={row.original.name}
-              className={isVirtual ? "text-muted-foreground font-medium" : ""}
-            >
-              {row.original.name}
-            </Truncate>
-          )}
-          {canExpand && (
-            <span className="ml-1 text-xs text-muted-foreground shrink-0">
-              ({row.subRows.length})
-            </span>
-          )}
-        </div>
       );
     },
   },
@@ -215,6 +188,7 @@ export const columns: ColumnDef<ClickUpTask>[] = [
       </Button>
     ),
     cell: ({ row }) => {
+      if (row.original._isProjectGroup) return null;
       const status = row.original.status;
       return (
         <Badge variant={getStatusColor(status.type)}>
@@ -241,6 +215,7 @@ export const columns: ColumnDef<ClickUpTask>[] = [
       </Button>
     ),
     cell: ({ row }) => {
+      if (row.original._isProjectGroup) return null;
       const creator = row.original.creator;
       const text = creator.username || creator.email || "-";
       return (
@@ -268,6 +243,7 @@ export const columns: ColumnDef<ClickUpTask>[] = [
       </Button>
     ),
     cell: ({ row }) => {
+      if (row.original._isProjectGroup) return null;
       const created = formatDate(row.original.date_created);
       return created || "-";
     },
@@ -290,6 +266,7 @@ export const columns: ColumnDef<ClickUpTask>[] = [
       </Button>
     ),
     cell: ({ row }) => {
+      if (row.original._isProjectGroup) return null;
       const dueDate = formatDate(row.original.due_date);
       return dueDate || "-";
     },
@@ -300,6 +277,7 @@ export const columns: ColumnDef<ClickUpTask>[] = [
     header: "",
     enableSorting: false,
     cell: ({ row }) => {
+      if (row.original._isProjectGroup) return null;
       return row.original.url ? (
         <a
           href={row.original.url}

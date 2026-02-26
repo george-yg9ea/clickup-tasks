@@ -38,6 +38,8 @@ export interface ClickUpTask {
   subTasks?: ClickUpTask[];
   /** True when this is a virtual parent row (parent not assigned to user) */
   _isVirtualParent?: boolean;
+  /** True when this row is a project group header */
+  _isProjectGroup?: boolean;
   priority: {
     id: string;
     priority: string;
