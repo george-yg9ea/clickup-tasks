@@ -11,7 +11,9 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { ClickUpTask } from "@/types/clickup";
+import { Button } from "@/components/ui/button";
 
 import {
   Table,
@@ -48,8 +50,31 @@ export function DataTable({ columns, data }: DataTableProps) {
     },
   });
 
+  const isAllExpanded = table.getIsAllRowsExpanded();
+
   return (
-    <div className="rounded-md border">
+    <div className="space-y-2">
+      <div className="flex justify-start">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 text-xs text-muted-foreground"
+          onClick={() => table.toggleAllRowsExpanded(!isAllExpanded)}
+        >
+          {isAllExpanded ? (
+            <>
+              <ChevronsDownUp className="mr-1.5 h-3.5 w-3.5" />
+              Collapse all
+            </>
+          ) : (
+            <>
+              <ChevronsUpDown className="mr-1.5 h-3.5 w-3.5" />
+              Expand all
+            </>
+          )}
+        </Button>
+      </div>
+      <div className="rounded-md border">
       <Table className="table-fixed">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -102,6 +127,7 @@ export function DataTable({ columns, data }: DataTableProps) {
           )}
         </TableBody>
       </Table>
+      </div>
     </div>
   );
 }
