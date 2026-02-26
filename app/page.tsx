@@ -1,19 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Navbar } from "@/components/navbar";
 import { DataTable } from "@/components/data-table";
-import { BoardView } from "@/components/board-view";
 import { columns } from "./columns";
 import { ClickUpTask } from "@/types/clickup";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { buildTaskTree } from "@/lib/task-utils";
 
 export default function Home() {
   const [tasks, setTasks] = useState<ClickUpTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<"table" | "board">("table");
 
   useEffect(() => {
     async function fetchTasks() {
@@ -40,6 +38,8 @@ export default function Home() {
     fetchTasks();
   }, []);
 
+  const treeData = useMemo(() => buildTaskTree(tasks), [tasks]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -65,23 +65,7 @@ export default function Home() {
                 No tasks found
               </div>
             ) : (
-              <>
-                <Tabs
-                  value={view}
-                  onValueChange={(v) => setView(v as "table" | "board")}
-                  className="mb-4"
-                >
-                  <TabsList>
-                    <TabsTrigger value="table">Table</TabsTrigger>
-                    <TabsTrigger value="board">Board</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                {view === "table" ? (
-                  <DataTable columns={columns} data={tasks} />
-                ) : (
-                  <BoardView tasks={tasks} />
-                )}
-              </>
+              <DataTable columns={columns} data={treeData} />
             )}
           </>
         )}

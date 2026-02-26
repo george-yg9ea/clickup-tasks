@@ -32,6 +32,12 @@ export interface ClickUpTask {
   checklists: any[];
   tags: any[];
   parent: string | null;
+  /** Set by API when subtasks are included; parent task name for subtasks */
+  parent_name?: string | null;
+  /** Populated client-side: nested subtasks for expandable rows */
+  subTasks?: ClickUpTask[];
+  /** True when this is a virtual parent row (parent not assigned to user) */
+  _isVirtualParent?: boolean;
   priority: {
     id: string;
     priority: string;

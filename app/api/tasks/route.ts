@@ -33,9 +33,9 @@ export async function GET() {
     const userData = await userResponse.json();
     const userId = userData.user.id;
 
-    // Fetch tasks assigned to the current user
+    // Fetch tasks assigned to the current user, including subtasks
     const tasksResponse = await fetch(
-      `https://api.clickup.com/api/v2/team/${teamId}/task?assignees[]=${userId}&include_closed=false`,
+      `https://api.clickup.com/api/v2/team/${teamId}/task?assignees[]=${userId}&include_closed=false&subtasks=true`,
       {
         headers: {
           'Authorization': apiToken,
@@ -50,10 +50,40 @@ export async function GET() {
 
     const data: ClickUpTasksResponse = await tasksResponse.json();
 
-    // Filter tasks to only include those assigned to the current user
-    const assignedTasks = data.tasks.filter(task => 
-      task.assignees.some(assignee => assignee.id === userId)
+    // Build map of task id -> name for parent labels (from tasks in this response)
+    const idToName = new Map<string, string>(data.tasks.map((t) => [t.id, t.name]));
+
+    // Find parent IDs we're missing (parent not in response because not assigned to user)
+    const assignedTasksRaw = data.tasks.filter((task) =>
+      task.assignees.some((assignee) => assignee.id === userId)
     );
+    const missingParentIds = [...new Set(
+      assignedTasksRaw
+        .filter((t) => t.parent && !idToName.has(t.parent))
+        .map((t) => t.parent as string)
+    )];
+
+    // Fetch missing parent task names from ClickUp API
+    const authHeader = { Authorization: apiToken };
+    await Promise.all(
+      missingParentIds.map(async (parentId) => {
+        try {
+          const res = await fetch(`https://api.clickup.com/api/v2/task/${parentId}`, {
+            headers: authHeader,
+          });
+          if (!res.ok) return;
+          const parentTask = await res.json();
+          if (parentTask.name) idToName.set(parentId, parentTask.name);
+        } catch {
+          // ignore single fetch failure
+        }
+      })
+    );
+
+    const assignedTasks = assignedTasksRaw.map((task) => ({
+      ...task,
+      parent_name: task.parent ? idToName.get(task.parent) ?? null : null,
+    }));
 
     return NextResponse.json({ tasks: assignedTasks });
   } catch (error) {
