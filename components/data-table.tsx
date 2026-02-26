@@ -28,7 +28,9 @@ interface DataTableProps {
 }
 
 export function DataTable({ columns, data }: DataTableProps) {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: "date_created", desc: true },
+  ]);
   const [expanded, setExpanded] = React.useState<ExpandedState>({});
 
   const table = useReactTable({
