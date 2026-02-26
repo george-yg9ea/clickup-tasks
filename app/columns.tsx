@@ -83,7 +83,7 @@ function sortableHeader(label: string) {
 
 const listColumn: ColumnDef<ClickUpTask> = {
   accessorKey: "list",
-  size: 160,
+  size: 130,
   accessorFn: (row) => row.list.name,
   header: sortableHeader("List"),
   cell: ({ row }) => {
@@ -100,7 +100,7 @@ const listColumn: ColumnDef<ClickUpTask> = {
 
 const statusColumn: ColumnDef<ClickUpTask> = {
   accessorKey: "status",
-  size: 130,
+  size: 120,
   accessorFn: (row) => row.status.status,
   header: sortableHeader("Status"),
   cell: ({ row }) => {
@@ -116,7 +116,7 @@ const statusColumn: ColumnDef<ClickUpTask> = {
 
 const creatorColumn: ColumnDef<ClickUpTask> = {
   accessorKey: "creator",
-  size: 140,
+  size: 120,
   accessorFn: (row) => row.creator.username || row.creator.email,
   header: sortableHeader("Assigned By"),
   cell: ({ row }) => {
@@ -133,7 +133,7 @@ const creatorColumn: ColumnDef<ClickUpTask> = {
 
 const dateCreatedColumn: ColumnDef<ClickUpTask> = {
   accessorKey: "date_created",
-  size: 110,
+  size: 100,
   accessorFn: (row) => (row.date_created ? parseInt(row.date_created) : 0),
   header: sortableHeader("Created"),
   cell: ({ row }) => {
@@ -144,7 +144,7 @@ const dateCreatedColumn: ColumnDef<ClickUpTask> = {
 
 const dueDateColumn: ColumnDef<ClickUpTask> = {
   accessorKey: "due_date",
-  size: 110,
+  size: 100,
   accessorFn: (row) => (row.due_date ? parseInt(row.due_date) : 0),
   header: sortableHeader("Due Date"),
   cell: ({ row }) => {
@@ -155,7 +155,7 @@ const dueDateColumn: ColumnDef<ClickUpTask> = {
 
 const linkColumn: ColumnDef<ClickUpTask> = {
   id: "link",
-  size: 70,
+  size: 55,
   header: "",
   enableSorting: false,
   cell: ({ row }) => {
@@ -257,7 +257,7 @@ export const groupedColumns: ColumnDef<ClickUpTask>[] = [
 
 const projectColumn: ColumnDef<ClickUpTask> = {
   accessorKey: "project",
-  size: 160,
+  size: 140,
   accessorFn: (row) => row.project?.name ?? "",
   header: sortableHeader("Project"),
   cell: ({ row }) => {
