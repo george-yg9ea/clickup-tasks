@@ -25,12 +25,11 @@ import {
 interface DataTableProps {
   columns: ColumnDef<ClickUpTask, unknown>[];
   data: ClickUpTask[];
+  defaultSort?: SortingState;
 }
 
-export function DataTable({ columns, data }: DataTableProps) {
-  const [sorting, setSorting] = React.useState<SortingState>([
-    { id: "date_created", desc: true },
-  ]);
+export function DataTable({ columns, data, defaultSort = [] }: DataTableProps) {
+  const [sorting, setSorting] = React.useState<SortingState>(defaultSort);
   const [expanded, setExpanded] = React.useState<ExpandedState>({});
 
   const table = useReactTable({

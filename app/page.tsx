@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { FolderKanban, List } from "lucide-react";
+import { FolderKanban, List, Eye, EyeOff } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { DataTable } from "@/components/data-table";
 import { groupedColumns, flatColumns } from "./columns";
@@ -17,6 +17,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grouped");
+  const [showDone, setShowDone] = useState(false);
+  const [showBacklog, setShowBacklog] = useState(false);
+  const [showRecurring, setShowRecurring] = useState(false);
 
   useEffect(() => {
     async function fetchTasks() {
@@ -43,8 +46,18 @@ export default function Home() {
     fetchTasks();
   }, []);
 
-  const groupedData = useMemo(() => buildProjectTree(tasks), [tasks]);
-  const flatData = useMemo(() => buildSubtaskTree(tasks), [tasks]);
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      const status = task.status.status.toLowerCase();
+      if (!showDone && status === "done") return false;
+      if (!showBacklog && status === "backlog") return false;
+      if (!showRecurring && status === "recurring tasks") return false;
+      return true;
+    });
+  }, [tasks, showDone, showBacklog, showRecurring]);
+
+  const groupedData = useMemo(() => buildProjectTree(filteredTasks), [filteredTasks]);
+  const flatData = useMemo(() => buildSubtaskTree(filteredTasks), [filteredTasks]);
 
   const data = viewMode === "grouped" ? groupedData : flatData;
   const columns = viewMode === "grouped" ? groupedColumns : flatColumns;
@@ -75,27 +88,75 @@ export default function Home() {
               </div>
             ) : (
               <>
-                <div className="mb-4 flex items-center gap-1 rounded-lg border p-1 w-fit">
-                  <Button
-                    variant={viewMode === "grouped" ? "secondary" : "ghost"}
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={() => setViewMode("grouped")}
-                  >
-                    <FolderKanban className="mr-1.5 h-3.5 w-3.5" />
-                    Group by Project
-                  </Button>
-                  <Button
-                    variant={viewMode === "all" ? "secondary" : "ghost"}
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={() => setViewMode("all")}
-                  >
-                    <List className="mr-1.5 h-3.5 w-3.5" />
-                    All Tasks
-                  </Button>
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="flex items-center gap-1 rounded-lg border p-1 w-fit">
+                    <Button
+                      variant={viewMode === "grouped" ? "secondary" : "ghost"}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setViewMode("grouped")}
+                    >
+                      <FolderKanban className="mr-1.5 h-3.5 w-3.5" />
+                      Group by Project
+                    </Button>
+                    <Button
+                      variant={viewMode === "all" ? "secondary" : "ghost"}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setViewMode("all")}
+                    >
+                      <List className="mr-1.5 h-3.5 w-3.5" />
+                      All Tasks
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-1 rounded-lg border p-1">
+                    <Button
+                      variant={showDone ? "secondary" : "ghost"}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setShowDone(!showDone)}
+                    >
+                      {showDone ? (
+                        <Eye className="mr-1.5 h-3.5 w-3.5 shrink-0" />
+                      ) : (
+                        <EyeOff className="mr-1.5 h-3.5 w-3.5 shrink-0 opacity-50" />
+                      )}
+                      Done
+                    </Button>
+                    <Button
+                      variant={showBacklog ? "secondary" : "ghost"}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setShowBacklog(!showBacklog)}
+                    >
+                      {showBacklog ? (
+                        <Eye className="mr-1.5 h-3.5 w-3.5 shrink-0" />
+                      ) : (
+                        <EyeOff className="mr-1.5 h-3.5 w-3.5 shrink-0 opacity-50" />
+                      )}
+                      Backlog
+                    </Button>
+                    <Button
+                      variant={showRecurring ? "secondary" : "ghost"}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setShowRecurring(!showRecurring)}
+                    >
+                      {showRecurring ? (
+                        <Eye className="mr-1.5 h-3.5 w-3.5 shrink-0" />
+                      ) : (
+                        <EyeOff className="mr-1.5 h-3.5 w-3.5 shrink-0 opacity-50" />
+                      )}
+                      Recurring
+                    </Button>
+                  </div>
                 </div>
-                <DataTable columns={columns} data={data} />
+                <DataTable
+                  key={viewMode}
+                  columns={columns}
+                  data={data}
+                  defaultSort={viewMode === "all" ? [{ id: "date_created", desc: true }] : []}
+                />
               </>
             )}
           </>

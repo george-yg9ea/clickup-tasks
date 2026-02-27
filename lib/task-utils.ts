@@ -98,5 +98,17 @@ export function buildProjectTree(tasks: ClickUpTask[]): ClickUpTask[] {
     result.push(projectGroup);
   }
 
+  function mostRecentActivity(group: ClickUpTask): number {
+    let latest = 0;
+    for (const task of group.subTasks ?? []) {
+      const updated = parseInt(task.date_updated || "0") || 0;
+      const created = parseInt(task.date_created || "0") || 0;
+      latest = Math.max(latest, updated, created);
+    }
+    return latest;
+  }
+
+  result.sort((a, b) => mostRecentActivity(b) - mostRecentActivity(a));
+
   return result;
 }
