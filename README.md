@@ -82,14 +82,15 @@ This is your ClickUp Workspace ID. To find it:
 
 The app title is **automatic** — it fetches your name from ClickUp (via the API token) and displays it as `"{Name}'s Tasks"` in both the navbar and the browser tab. No configuration needed.
 
-### Allowed email domain
+### Authentication
 
-By default, only `@whiterabbit.group` emails can sign in. Change this in `auth.ts`:
+The app uses **Sign in with Google** (via NextAuth.js). Access is restricted by email domain — by default, only `@whiterabbit.group` emails can sign in. To change this, edit `auth.ts`:
+
 ```typescript
 const ALLOWED_EMAIL_DOMAIN = "whiterabbit.group";  // ← change to your domain
 ```
 
-To allow any email, remove the domain check in the `signIn` callback entirely.
+To allow any email domain, remove the domain check in the `signIn` callback entirely.
 
 ---
 
