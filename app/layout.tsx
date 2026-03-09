@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "George's Tasks",
+  title: "My Tasks",
   description: "View your assigned tasks from ClickUp",
 };
 
