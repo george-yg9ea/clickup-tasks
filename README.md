@@ -1,6 +1,6 @@
 # ClickUp Tasks Dashboard
 
-A personal dashboard that displays ClickUp tasks assigned to you, with project grouping, subtask accordions, status filters, and sortable columns.
+A dashboard to view your ClickUp tasks — with project grouping, subtask trees, status filters, and sortable columns.
 
 **Tech stack:** Next.js 16, React 19, TypeScript, shadcn/ui, Tailwind CSS 4, TanStack Table, NextAuth.js v5 (Google OAuth), ClickUp API v2.
 
@@ -10,7 +10,7 @@ A personal dashboard that displays ClickUp tasks assigned to you, with project g
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/george-yg9ea/clickup-tasks.git
+git clone <repo-url>
 cd clickup-tasks
 
 # 2. Install dependencies
@@ -78,21 +78,9 @@ This is your ClickUp Workspace ID. To find it:
 
 ## Customization
 
-To make this your own, update these files:
-
 ### App title (browser tab + navbar)
 
-**Browser tab title** — `app/layout.tsx`:
-```typescript
-export const metadata: Metadata = {
-  title: "Your Name's Tasks",  // ← change this
-};
-```
-
-**Navbar heading** — `components/navbar.tsx`:
-```typescript
-<h1 className="text-xl font-semibold">Your Name's Tasks</h1>  // ← change this
-```
+The app title is **automatic** — it fetches your name from ClickUp (via the API token) and displays it as `"{Name}'s Tasks"` in both the navbar and the browser tab. No configuration needed.
 
 ### Allowed email domain
 

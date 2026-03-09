@@ -1,6 +1,6 @@
 # Google Cloud Console – OAuth setup for Sign in with Google
 
-Use this to get **Client ID** and **Client Secret** for your app (for `.env` as `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`).
+Use this to get **Client ID** and **Client Secret** for your app (for `.env.local` as `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`).
 
 ---
 
@@ -69,7 +69,7 @@ You must have a consent screen before creating OAuth credentials.
 
 ## 6. Put them in your app
 
-In your project root, in `.env` or `.env.local`:
+In your project root, in `.env.local`:
 
 ```env
 AUTH_GOOGLE_ID=paste_your_client_id_here
