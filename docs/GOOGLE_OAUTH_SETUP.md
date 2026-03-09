@@ -28,7 +28,7 @@ You must have a consent screen before creating OAuth credentials.
 1. In the left sidebar, open **“OAuth consent screen”** (under **“APIs & Services”**).
 2. Choose **External** (unless your org uses Google Workspace and you want **Internal** only) → **Create**.
 3. Fill in:
-   - **App name:** e.g. `George's Tasks`
+   - **App name:** e.g. `My ClickUp Tasks`
    - **User support email:** your email
    - **Developer contact:** your email
 4. Click **Save and Continue**.
@@ -44,17 +44,17 @@ You must have a consent screen before creating OAuth credentials.
    **https://console.cloud.google.com/apis/credentials**
 2. Click **+ Create credentials** → **OAuth client ID**.
 3. **Application type:** **Web application**.
-4. **Name:** e.g. `George's Tasks (Web)`.
+4. **Name:** e.g. `My ClickUp Tasks (Web)`.
 5. **Authorized JavaScript origins**
    - For local dev, add:
      - `http://localhost:3000`
    - For production, add:
-     - `https://georgestasks.vercel.app`
+     - `https://your-domain.vercel.app` (replace with your actual Vercel domain)
 6. **Authorized redirect URIs**
    - For local dev, add **exactly**:
      - `http://localhost:3000/api/auth/callback/google`
    - For production, add **exactly**:
-     - `https://georgestasks.vercel.app/api/auth/callback/google`
+     - `https://your-domain.vercel.app/api/auth/callback/google` (replace with your actual Vercel domain)
 7. Click **Create**.
 
 ---
@@ -98,8 +98,8 @@ Restart the dev server after changing env vars.
 |---------------------------|--------|
 | Credentials page           | https://console.cloud.google.com/apis/credentials |
 | Local redirect URI        | `http://localhost:3000/api/auth/callback/google`   |
-| Production redirect URI   | `https://georgestasks.vercel.app/api/auth/callback/google`   |
-| Production domain         | `https://georgestasks.vercel.app`   |
+| Production redirect URI   | `https://your-domain.vercel.app/api/auth/callback/google`   |
+| Production domain         | `https://your-domain.vercel.app`   |
 | Env vars for NextAuth     | `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_SECRET` |
 
 ---
