@@ -32,6 +32,7 @@ export async function GET() {
 
     const userData = await userResponse.json();
     const userId = userData.user.id;
+    const userName = userData.user.username || "";
 
     // Fetch tasks assigned to the current user, including subtasks
     const tasksResponse = await fetch(
@@ -85,7 +86,7 @@ export async function GET() {
       parent_name: task.parent ? idToName.get(task.parent) ?? null : null,
     }));
 
-    return NextResponse.json({ tasks: assignedTasks });
+    return NextResponse.json({ tasks: assignedTasks, userName });
   } catch (error) {
     console.error('Error fetching ClickUp tasks:', error);
     return NextResponse.json(
