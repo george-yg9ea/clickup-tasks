@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { ClickUpTask } from "@/types/clickup";
 
 const HOUR_MS = 3_600_000;
@@ -26,12 +28,12 @@ type Schedule = Record<string, Record<string, number>>;
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
-function getWeekDays(): Date[] {
+function getWeekDays(offset = 0): Date[] {
   const today = new Date();
   const dow = today.getDay();
   const diffToMon = dow === 0 ? -6 : 1 - dow;
   const mon = new Date(today);
-  mon.setDate(today.getDate() + diffToMon);
+  mon.setDate(today.getDate() + diffToMon + offset * 7);
   mon.setHours(0, 0, 0, 0);
   return Array.from({ length: 5 }, (_, i) => {
     const d = new Date(mon);
@@ -317,6 +319,7 @@ function DayCol({
 // ── WeekView ───────────────────────────────────────────────────────────────
 
 export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
+  const [weekOffset, setWeekOffset] = useState(0);
   const [schedule, setSchedule] = useState<Schedule>({});
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
@@ -362,7 +365,7 @@ export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
     return Math.max(0, task.time_estimate / HOUR_MS - totalAllocatedH(task.id));
   }
 
-  const weekDays = getWeekDays();
+  const weekDays = getWeekDays(weekOffset);
   const inbox = tasks.filter((t) => !isFullyScheduled(t));
 
   const inboxGroups: { projectId: string; projectName: string; tasks: ClickUpTask[] }[] = [];
@@ -467,7 +470,30 @@ export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
         />
       )}
 
-      <div className="flex gap-4 overflow-hidden" style={{ height: "calc(100vh - 220px)" }}>
+      <div className="flex items-center gap-2 mb-3">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setWeekOffset((o) => o - 1)}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span className="text-sm font-medium min-w-[160px] text-center">
+          {weekOffset === 0
+            ? "This week"
+            : weekOffset === 1
+            ? "Next week"
+            : weekOffset === -1
+            ? "Last week"
+            : `${weekDays[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${weekDays[4].toLocaleDateString(undefined, { month: "short", day: "numeric" })}`}
+        </span>
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setWeekOffset((o) => o + 1)}>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        {weekOffset !== 0 && (
+          <Button variant="ghost" size="sm" className="h-7 text-xs ml-1" onClick={() => setWeekOffset(0)}>
+            Today
+          </Button>
+        )}
+      </div>
+
+      <div className="flex gap-4 overflow-hidden" style={{ height: "calc(100vh - 260px)" }}>
         {/* Inbox */}
         <div className="w-52 shrink-0 flex flex-col gap-2">
           <div className="text-sm font-semibold border-b pb-1">

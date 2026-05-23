@@ -17,7 +17,7 @@ export function Dashboard({ initialName }: { initialName: string | null }) {
   const [tasks, setTasks] = useState<ClickUpTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("grouped");
+  const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [showDone, setShowDone] = useState(false);
   const [showBacklog, setShowBacklog] = useState(false);
   const [showRecurring, setShowRecurring] = useState(false);
@@ -96,6 +96,15 @@ export function Dashboard({ initialName }: { initialName: string | null }) {
                 <div className="mb-4 flex items-center justify-between">
                   <div className="flex items-center gap-1 rounded-lg border p-1 w-fit">
                     <Button
+                      variant={viewMode === "week" ? "secondary" : "ghost"}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setViewMode("week")}
+                    >
+                      <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
+                      Week
+                    </Button>
+                    <Button
                       variant={viewMode === "grouped" ? "secondary" : "ghost"}
                       size="sm"
                       className="h-7 text-xs"
@@ -112,15 +121,6 @@ export function Dashboard({ initialName }: { initialName: string | null }) {
                     >
                       <List className="mr-1.5 h-3.5 w-3.5" />
                       All Tasks
-                    </Button>
-                    <Button
-                      variant={viewMode === "week" ? "secondary" : "ghost"}
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={() => setViewMode("week")}
-                    >
-                      <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
-                      Week
                     </Button>
                   </div>
                   <div className="flex items-center gap-1 rounded-lg border p-1">
