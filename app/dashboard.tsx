@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { FolderKanban, List, Eye, EyeOff } from "lucide-react";
+import { FolderKanban, List, Eye, EyeOff, CalendarDays } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { DataTable } from "@/components/data-table";
 import { groupedColumns, flatColumns } from "./columns";
@@ -9,8 +9,9 @@ import { ClickUpTask } from "@/types/clickup";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { buildProjectTree, buildSubtaskTree } from "@/lib/task-utils";
+import { WeekView } from "./week-view";
 
-type ViewMode = "grouped" | "all";
+type ViewMode = "grouped" | "all" | "week";
 
 export function Dashboard({ initialName }: { initialName: string | null }) {
   const [tasks, setTasks] = useState<ClickUpTask[]>([]);
@@ -112,6 +113,15 @@ export function Dashboard({ initialName }: { initialName: string | null }) {
                       <List className="mr-1.5 h-3.5 w-3.5" />
                       All Tasks
                     </Button>
+                    <Button
+                      variant={viewMode === "week" ? "secondary" : "ghost"}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setViewMode("week")}
+                    >
+                      <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
+                      Week
+                    </Button>
                   </div>
                   <div className="flex items-center gap-1 rounded-lg border p-1">
                     <Button
@@ -155,12 +165,16 @@ export function Dashboard({ initialName }: { initialName: string | null }) {
                     </Button>
                   </div>
                 </div>
-                <DataTable
-                  key={viewMode}
-                  columns={columns}
-                  data={data}
-                  defaultSort={viewMode === "all" ? [{ id: "date_created", desc: true }] : []}
-                />
+                {viewMode === "week" ? (
+                  <WeekView tasks={filteredTasks} />
+                ) : (
+                  <DataTable
+                    key={viewMode}
+                    columns={columns}
+                    data={data}
+                    defaultSort={viewMode === "all" ? [{ id: "date_created", desc: true }] : []}
+                  />
+                )}
               </>
             )}
           </>
