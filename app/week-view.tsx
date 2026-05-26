@@ -321,6 +321,7 @@ function DayCol({
 export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [schedule, setSchedule] = useState<Schedule>({});
+  const [scheduleLoaded, setScheduleLoaded] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [pendingDrop, setPendingDrop] = useState<{
@@ -331,15 +332,22 @@ export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
   const dragSourceRef = useRef<string>("inbox");
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("week_schedule_v2");
-      if (raw) setSchedule(JSON.parse(raw));
-    } catch {}
+    fetch("/api/schedule")
+      .then((r) => r.json())
+      .then((data) => {
+        setSchedule(data ?? {});
+        setScheduleLoaded(true);
+      })
+      .catch(() => setScheduleLoaded(true));
   }, []);
 
   function save(s: Schedule) {
     setSchedule(s);
-    localStorage.setItem("week_schedule_v2", JSON.stringify(s));
+    fetch("/api/schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(s),
+    }).catch(() => {});
   }
 
   const projectIds = [...new Set(tasks.map((t) => t.project?.id ?? "_none"))];
@@ -458,6 +466,10 @@ export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
   }
 
   const pendingTask = pendingDrop ? tasks.find((t) => t.id === pendingDrop.taskId) : null;
+
+  if (!scheduleLoaded) {
+    return <div className="text-sm text-muted-foreground py-8 text-center">Loading schedule…</div>;
+  }
 
   return (
     <>
