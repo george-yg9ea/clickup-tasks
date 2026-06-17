@@ -34,22 +34,27 @@ export async function GET() {
     const userId = userData.user.id;
     const userName = userData.user.username || "";
 
-    // Fetch tasks assigned to the current user, including subtasks
-    const tasksResponse = await fetch(
-      `https://api.clickup.com/api/v2/team/${teamId}/task?assignees[]=${userId}&include_closed=false&subtasks=true`,
-      {
-        headers: {
-          'Authorization': apiToken,
-        },
-      }
-    );
+    // Fetch all tasks assigned to the current user, paginating through results
+    const allTasks: ClickUpTasksResponse['tasks'] = [];
+    let page = 0;
+    while (true) {
+      const tasksResponse = await fetch(
+        `https://api.clickup.com/api/v2/team/${teamId}/task?assignees[]=${userId}&include_closed=false&subtasks=true&page=${page}`,
+        { headers: { 'Authorization': apiToken } }
+      );
 
-    if (!tasksResponse.ok) {
-      const errorText = await tasksResponse.text();
-      throw new Error(`Failed to fetch tasks: ${tasksResponse.statusText} - ${errorText}`);
+      if (!tasksResponse.ok) {
+        const errorText = await tasksResponse.text();
+        throw new Error(`Failed to fetch tasks: ${tasksResponse.statusText} - ${errorText}`);
+      }
+
+      const data: ClickUpTasksResponse = await tasksResponse.json();
+      allTasks.push(...data.tasks);
+      if (data.tasks.length < 100) break;
+      page++;
     }
 
-    const data: ClickUpTasksResponse = await tasksResponse.json();
+    const data = { tasks: allTasks };
 
     // Build map of task id -> name for parent labels (from tasks in this response)
     const idToName = new Map<string, string>(data.tasks.map((t) => [t.id, t.name]));
