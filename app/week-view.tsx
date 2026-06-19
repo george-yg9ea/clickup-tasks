@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ClickUpTask } from "@/types/clickup";
 
@@ -128,6 +128,8 @@ function TaskCard({
   displayHours,
   onEditHours,
   maxHours,
+  overAllocatedH,
+  allocatedH,
   onDragStart,
   onDragEnd,
 }: {
@@ -138,6 +140,8 @@ function TaskCard({
   displayHours?: number;
   onEditHours?: (hours: number) => void;
   maxHours?: number;
+  overAllocatedH?: number;
+  allocatedH?: number;
   onDragStart: () => void;
   onDragEnd: () => void;
 }) {
@@ -218,7 +222,12 @@ function TaskCard({
       {task.project?.name ? (
         <p className="text-[10px] opacity-60 mt-0.5 truncate">{task.project.name}</p>
       ) : null}
-      <p className="text-[10px] opacity-60 mt-0.5">{hoursLabel}</p>
+      <p className="text-[10px] opacity-60 mt-0.5">{allocatedH !== undefined ? (task.time_estimate ? `${hoursLabel} estimated` : "No estimate") : hoursLabel}</p>
+      {allocatedH !== undefined && allocatedH > 0 && (
+        <p className={`text-[10px] mt-0.5 ${overAllocatedH && overAllocatedH > 0 ? "text-red-500 font-medium" : "opacity-60"}`}>
+          {fmtH(allocatedH)} allocated
+        </p>
+      )}
 
       {onEditHours && (
         <div
@@ -236,7 +245,7 @@ function TaskCard({
 
 function DayCol({
   day, dayIndex, dateKey, dayTasks, totalH, isOver, draggingId, schedule,
-  getColor, onDragOver, onDragLeave, onDrop, onTaskDragStart, onTaskDragEnd, onEditHours,
+  getColor, onDragOver, onDragLeave, onDrop, onTaskDragStart, onTaskDragEnd, onEditHours, onRemove,
 }: {
   day: Date;
   dayIndex: number;
@@ -253,6 +262,7 @@ function DayCol({
   onTaskDragStart: (taskId: string, source: string) => void;
   onTaskDragEnd: () => void;
   onEditHours: (taskId: string, dateKey: string, hours: number) => void;
+  onRemove: (taskId: string, dateKey: string) => void;
 }) {
   const isToday = toDateKey(new Date()) === dateKey;
   const pct = Math.min(100, (totalH / DAY_CAPACITY_H) * 100);
@@ -290,25 +300,28 @@ function DayCol({
       >
         {dayTasks.map((t) => {
           const thisDayH = schedule[t.id]?.[dateKey] ?? 0;
-          const otherDaysH = Object.entries(schedule[t.id] ?? {})
-            .filter(([k]) => k !== dateKey)
-            .reduce((s, [, h]) => s + h, 0);
-          const maxH = t.time_estimate
-            ? Math.max(0.25, t.time_estimate / HOUR_MS - otherDaysH)
-            : undefined;
+          const maxH = undefined;
           return (
-            <TaskCard
-              key={t.id}
-              task={t}
-              color={getColor(t)}
-              isDragging={draggingId === t.id}
-              proportional
-              displayHours={thisDayH}
-              maxHours={maxH}
-              onEditHours={(h) => onEditHours(t.id, dateKey, h)}
-              onDragStart={() => onTaskDragStart(t.id, dateKey)}
-              onDragEnd={onTaskDragEnd}
-            />
+            <div key={t.id} className="relative group/card">
+              <TaskCard
+                task={t}
+                color={getColor(t)}
+                isDragging={draggingId === t.id}
+                proportional
+                displayHours={thisDayH}
+                maxHours={maxH}
+                onEditHours={(h) => onEditHours(t.id, dateKey, h)}
+                onDragStart={() => onTaskDragStart(t.id, dateKey)}
+                onDragEnd={onTaskDragEnd}
+              />
+              <button
+                onClick={() => onRemove(t.id, dateKey)}
+                className="absolute top-0.5 right-1 p-1.5 cursor-pointer opacity-0 group-hover/card:opacity-60 hover:!opacity-100 transition-opacity text-current"
+                title="Remove from day"
+              >
+                <span className="text-[10px] leading-none">✕</span>
+              </button>
+            </div>
           );
         })}
       </div>
@@ -324,6 +337,7 @@ export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
   const [scheduleLoaded, setScheduleLoaded] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [pendingDrop, setPendingDrop] = useState<{
     taskId: string;
     dateKey: string;
@@ -362,10 +376,8 @@ export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
     return Object.values(schedule[taskId] ?? {}).reduce((s, h) => s + h, 0);
   }
 
-  function isFullyScheduled(task: ClickUpTask): boolean {
-    const allocs = schedule[task.id] ?? {};
-    if (!task.time_estimate) return Object.keys(allocs).length > 0;
-    return totalAllocatedH(task.id) >= task.time_estimate / HOUR_MS;
+  function isFullyScheduled(_task: ClickUpTask): boolean {
+    return false;
   }
 
   function remainingH(task: ClickUpTask): number {
@@ -375,6 +387,16 @@ export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
 
   const weekDays = getWeekDays(weekOffset);
   const inbox = tasks.filter((t) => !isFullyScheduled(t));
+
+  useEffect(() => {
+    const ids = [...new Set(inbox.map((t) => t.project?.id ?? "_none"))];
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => { if (!next.has(id)) next.add(id); });
+      return next.size === prev.size ? prev : next;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasks]);
 
   const inboxGroups: { projectId: string; projectName: string; tasks: ClickUpTask[] }[] = [];
   for (const task of inbox) {
@@ -442,6 +464,14 @@ export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
     setDragOver(null);
   }
 
+  function handleRemoveFromDay(taskId: string, dateKey: string) {
+    const next = { ...schedule };
+    const allocs = { ...(next[taskId] ?? {}) };
+    delete allocs[dateKey];
+    next[taskId] = allocs;
+    save(next);
+  }
+
   function handleEditHours(taskId: string, dateKey: string, hours: number) {
     const next = { ...schedule };
     next[taskId] = { ...(next[taskId] ?? {}), [dateKey]: hours };
@@ -507,10 +537,25 @@ export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
 
       <div className="flex gap-3 overflow-x-auto" style={{ height: "calc(100vh - 260px)" }}>
         {/* Inbox */}
-        <div className="flex-1 flex flex-col gap-2" style={{ minWidth: 130 }}>
-          <div className="text-sm font-semibold border-b pb-1">
-            Inbox{" "}
-            <span className="text-muted-foreground font-normal">({inbox.length})</span>
+        <div className="flex-1 flex flex-col gap-2 bg-muted/40 rounded-lg px-2 py-1" style={{ minWidth: 130 }}>
+          <div className="flex items-center pb-1 border-b h-10 gap-1">
+            <div className="text-sm font-semibold flex-1">
+              Inbox{" "}
+              <span className="text-muted-foreground font-normal">({inbox.length})</span>
+            </div>
+            <button
+              onClick={() => {
+                const allIds = inboxGroups.map((g) => g.projectId);
+                const allCollapsed = allIds.every((id) => collapsedGroups.has(id));
+                setCollapsedGroups(allCollapsed ? new Set() : new Set(allIds));
+              }}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              title={inboxGroups.every((g) => collapsedGroups.has(g.projectId)) ? "Expand all" : "Collapse all"}
+            >
+              {inboxGroups.every((g) => collapsedGroups.has(g.projectId))
+                ? <ChevronsUpDown className="h-3.5 w-3.5" />
+                : <ChevronsDownUp className="h-3.5 w-3.5" />}
+            </button>
           </div>
           <div
             className={`flex-1 rounded-lg border-2 border-dashed p-1.5 flex flex-col gap-1.5 overflow-y-auto transition-colors ${
@@ -523,30 +568,52 @@ export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
             {inbox.length === 0 && (
               <p className="text-xs text-muted-foreground text-center pt-6">All placed ✓</p>
             )}
-            {inboxGroups.map((group) => (
-              <div key={group.projectId} className="flex flex-col gap-1 rounded-lg border bg-card p-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground px-1 pt-0.5 pb-0.5">
-                  {group.projectName}
-                </p>
-                {group.tasks.map((t) => {
-                  const rem = remainingH(t);
-                  const displayHours = t.time_estimate
-                    ? rem > 0 ? rem : t.time_estimate / HOUR_MS
-                    : undefined;
-                  return (
-                    <TaskCard
-                      key={t.id}
-                      task={t}
-                      color={getColor(t)}
-                      isDragging={draggingId === t.id}
-                      displayHours={displayHours}
-                      onDragStart={() => handleDragStart(t.id, "inbox")}
-                      onDragEnd={handleDragEnd}
-                    />
-                  );
-                })}
-              </div>
-            ))}
+            {inboxGroups.map((group) => {
+              const isCollapsed = collapsedGroups.has(group.projectId);
+              return (
+                <div key={group.projectId} className="flex flex-col rounded-lg border bg-card">
+                  <button
+                    onClick={() => setCollapsedGroups((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(group.projectId)) next.delete(group.projectId);
+                      else next.add(group.projectId);
+                      return next;
+                    })}
+                    className="flex items-center gap-1.5 w-full text-left px-2 py-1.5 hover:bg-muted/50 transition-colors"
+                  >
+                    <ChevronRight className={`h-3 w-3 text-muted-foreground shrink-0 transition-transform ${isCollapsed ? "" : "rotate-90"}`} />
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground truncate flex-1">
+                      {group.projectName}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{group.tasks.length}</span>
+                  </button>
+                  {!isCollapsed && (
+                    <div className="flex flex-col gap-1 px-1.5 pb-1.5">
+                      {group.tasks.map((t) => {
+                        const estimateH = t.time_estimate ? t.time_estimate / HOUR_MS : undefined;
+                        const allocatedH = totalAllocatedH(t.id);
+                        const overH = estimateH !== undefined ? Math.max(0, allocatedH - estimateH) : 0;
+                        const rem = remainingH(t);
+                        const displayHours = estimateH;
+                        return (
+                          <TaskCard
+                            key={t.id}
+                            task={t}
+                            color={getColor(t)}
+                            isDragging={draggingId === t.id}
+                            displayHours={displayHours}
+                            overAllocatedH={overH}
+                            allocatedH={allocatedH}
+                            onDragStart={() => handleDragStart(t.id, "inbox")}
+                            onDragEnd={handleDragEnd}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -571,6 +638,7 @@ export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
               onTaskDragStart={handleDragStart}
               onTaskDragEnd={handleDragEnd}
               onEditHours={handleEditHours}
+              onRemove={handleRemoveFromDay}
             />
           );
         })}
