@@ -505,9 +505,9 @@ export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
         )}
       </div>
 
-      <div className="flex gap-4 overflow-hidden" style={{ height: "calc(100vh - 260px)" }}>
+      <div className="flex gap-3 overflow-x-auto" style={{ height: "calc(100vh - 260px)" }}>
         {/* Inbox */}
-        <div className="w-52 shrink-0 flex flex-col gap-2">
+        <div className="flex-1 flex flex-col gap-2" style={{ minWidth: 130 }}>
           <div className="text-sm font-semibold border-b pb-1">
             Inbox{" "}
             <span className="text-muted-foreground font-normal">({inbox.length})</span>
@@ -524,8 +524,8 @@ export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
               <p className="text-xs text-muted-foreground text-center pt-6">All placed ✓</p>
             )}
             {inboxGroups.map((group) => (
-              <div key={group.projectId} className="flex flex-col gap-1">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground px-1 pt-1">
+              <div key={group.projectId} className="flex flex-col gap-1 rounded-lg border bg-card p-1.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground px-1 pt-0.5 pb-0.5">
                   {group.projectName}
                 </p>
                 {group.tasks.map((t) => {
@@ -551,31 +551,29 @@ export function WeekView({ tasks }: { tasks: ClickUpTask[] }) {
         </div>
 
         {/* Day columns */}
-        <div className="flex-1 flex gap-3 overflow-x-auto">
-          {weekDays.map((day, i) => {
-            const key = toDateKey(day);
-            return (
-              <DayCol
-                key={key}
-                day={day}
-                dayIndex={i}
-                dateKey={key}
-                dayTasks={tasksForDay(key)}
-                totalH={totalHForDay(key)}
-                isOver={dragOver === key}
-                draggingId={draggingId}
-                schedule={schedule}
-                getColor={getColor}
-                onDragOver={() => setDragOver(key)}
-                onDragLeave={() => setDragOver(null)}
-                onDrop={() => handleDrop(key)}
-                onTaskDragStart={handleDragStart}
-                onTaskDragEnd={handleDragEnd}
-                onEditHours={handleEditHours}
-              />
-            );
-          })}
-        </div>
+        {weekDays.map((day, i) => {
+          const key = toDateKey(day);
+          return (
+            <DayCol
+              key={key}
+              day={day}
+              dayIndex={i}
+              dateKey={key}
+              dayTasks={tasksForDay(key)}
+              totalH={totalHForDay(key)}
+              isOver={dragOver === key}
+              draggingId={draggingId}
+              schedule={schedule}
+              getColor={getColor}
+              onDragOver={() => setDragOver(key)}
+              onDragLeave={() => setDragOver(null)}
+              onDrop={() => handleDrop(key)}
+              onTaskDragStart={handleDragStart}
+              onTaskDragEnd={handleDragEnd}
+              onEditHours={handleEditHours}
+            />
+          );
+        })}
       </div>
     </>
   );
